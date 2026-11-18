@@ -73,12 +73,12 @@ The wrapper still defaults to the internal bundled services so new Unraid users 
 ## Publishing and Releases
 
 - Wrapper releases use the upstream version plus an AIO revision, such as `v2.15.3-aio.1`.
-- Upstream monitoring, release preparation, registry publishing, and catalog sync are owned by `aio-fleet` from `.aio-fleet.yml`.
+- The upstream project uses `.aio-fleet.yml` and `aio-fleet` for monitoring, release preparation, registry publishing, and catalog sync.
 - Changelog generation and XML `<Changes>` sync are run centrally by `aio-fleet` during release preparation.
 - `main` publishes `latest`, the pinned upstream version tag, the explicit AIO package tag, and `sha-<commit>` to Docker Hub.
 - Publish jobs require Docker Hub credentials and push the CA-facing Docker Hub tags directly.
 
-See [docs/releases.md](docs/releases.md) for the central release process details.
+See [docs/releases.md](docs/releases.md) for the upstream release process and the Caffeinnovate fork's GitHub Actions publisher.
 
 ## Validation
 

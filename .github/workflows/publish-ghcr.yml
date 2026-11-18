@@ -1,0 +1,70 @@
+name: Publish Penpot AIO to GHCR
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    if: github.repository == 'caffeinnovate/penpot-aio' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE_NAME: ghcr.io/caffeinnovate/penpot-aio
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+
+      - name: Check the Unraid template
+        run: |
+          python -m pip install 'aio-fleet[app-tests] @ git+https://github.com/JSONbored/aio-fleet.git@2d5435604fb03485b6cd03e5ecd769ae0eae8fe2'
+          python scripts/generate_penpot_template.py --check
+          python -m pytest tests/template
+
+      - name: Set up ARM64 emulation
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+        with:
+          platforms: arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build the amd64 test image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          tags: penpot-aio:pytest
+          load: true
+
+      - name: Run Docker integration tests
+        env:
+          AIO_PYTEST_USE_PREBUILT_IMAGE: "true"
+        run: python -m pytest tests/integration -m integration
+
+      - name: Log in to GHCR
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish the commit-tagged image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
