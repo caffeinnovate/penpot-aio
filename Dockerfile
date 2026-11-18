@@ -60,6 +60,7 @@ COPY --from=backend /opt/jre /opt/jre
 COPY --from=backend /opt/penpot/backend /opt/penpot/backend
 COPY --from=frontend /var/www/app /var/www/app
 COPY --from=frontend /tmp/nginx.conf.template /tmp/nginx.conf.template
+COPY --from=frontend /tmp/nginx-mcp-locations.conf.template /tmp/nginx-mcp-locations.conf.template
 COPY --from=frontend /tmp/resolvers.conf.template /tmp/resolvers.conf.template
 COPY --from=frontend /etc/nginx/nginx-security-headers.conf /etc/nginx/nginx-security-headers.conf
 COPY --from=frontend /etc/nginx/overrides /etc/nginx/overrides

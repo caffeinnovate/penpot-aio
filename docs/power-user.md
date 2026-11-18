@@ -23,4 +23,4 @@ GitHub, GitLab, Google, OIDC, LDAP, domain allow/block lists, and cookie control
 
 ## MCP
 
-MCP runs internally by default and is proxied through `/mcp`. Direct host ports for `4401` and `4402` are optional and blank by default.
+MCP runs internally by default. When the bundled service and Penpot's `enable-mcp` flag are enabled, the frontend proxies `/mcp/stream`, `/mcp/sse`, and `/mcp/ws`. Direct host ports for `4401` and `4402` are optional and blank by default.

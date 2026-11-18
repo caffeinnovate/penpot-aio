@@ -69,8 +69,27 @@ fi
 PENPOT_DEFAULT_INTERNAL_RESOLVER="$(awk 'BEGIN{ORS=" "} $1=="nameserver" { sub(/%.*$/,"",$2); print ($2 ~ ":")? "["$2"]": $2}' /etc/resolv.conf)"
 export PENPOT_INTERNAL_RESOLVER="${PENPOT_INTERNAL_RESOLVER:-${PENPOT_DEFAULT_INTERNAL_RESOLVER}}"
 envsubst '$PENPOT_INTERNAL_RESOLVER' < /tmp/resolvers.conf.template > /etc/nginx/overrides/http.d/resolvers.conf
-envsubst '$PENPOT_BACKEND_URI,$PENPOT_EXPORTER_URI,$PENPOT_NITRATE_URI,$PENPOT_MCP_URI,$PENPOT_MCP_URI_WS,$PENPOT_HTTP_SERVER_MAX_BODY_SIZE,$PENPOT_IPV6_LISTEN_DIRECTIVE' \
+envsubst '$PENPOT_BACKEND_URI,$PENPOT_EXPORTER_URI,$PENPOT_NITRATE_URI,$PENPOT_HTTP_SERVER_MAX_BODY_SIZE,$PENPOT_IPV6_LISTEN_DIRECTIVE' \
 	< /tmp/nginx.conf.template > /etc/nginx/nginx.conf
+
+# Penpot's last enable-mcp or disable-mcp flag determines whether MCP is enabled.
+mcp_flag=""
+flags="${PENPOT_FLAGS:-}"
+read -r -a penpot_flags <<< "${flags//$'\n'/ }"
+for flag in "${penpot_flags[@]}"; do
+	if [[ ${flag} == enable-mcp || ${flag} == disable-mcp ]]; then
+		mcp_flag="${flag}"
+	fi
+done
+
+mcp_locations="/etc/nginx/overrides/server.d/mcp-locations.conf"
+if [[ ${mcp_flag} == enable-mcp ]] && ! env_flag_is_false "${PENPOT_AIO_ENABLE_MCP:-true}"; then
+	mkdir -p "$(dirname "${mcp_locations}")"
+	envsubst '$PENPOT_MCP_URI,$PENPOT_MCP_URI_WS' \
+		< /tmp/nginx-mcp-locations.conf.template > "${mcp_locations}"
+else
+	rm -f "${mcp_locations}"
+fi
 
 python3 - <<'PY'
 import os

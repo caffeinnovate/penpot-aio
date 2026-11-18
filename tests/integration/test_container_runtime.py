@@ -77,6 +77,28 @@ def test_happy_path_boot_and_restart_persists_generated_env(
         assert "alias /appdata/assets;" in nginx_config  # nosec B101
         assert "alias /opt/data/assets;" not in nginx_config  # nosec B101
 
+        _wait_for_service(
+            lambda: (
+                container.exec(
+                    "timeout 2 bash -c ': >/dev/tcp/127.0.0.1/4401'", check=False
+                ).returncode
+                == 0
+            ),
+            label="bundled MCP",
+        )
+        initialize_request = (
+            '{"jsonrpc":"2.0","id":1,"method":"initialize",'
+            '"params":{"protocolVersion":"2025-03-26","capabilities":{},'
+            '"clientInfo":{"name":"runtime-test","version":"1"}}}'
+        )
+        mcp_response = container.exec(
+            "curl --fail --silent --show-error --max-time 10 "
+            "-H 'Accept: application/json, text/event-stream' "
+            "-H 'Content-Type: application/json' "
+            f"--data '{initialize_request}' http://127.0.0.1:8080/mcp/stream"
+        ).stdout
+        assert '"serverInfo"' in mcp_response  # nosec B101
+
         container.restart()
         container.wait_for_http(path="/readyz")
 
@@ -119,7 +141,7 @@ def test_extra_env_file_overrides_generated_runtime_defaults(
         preseed_appdata=[
             "install -d -m 700 /appdata/config && "
             "printf '%s\n' 'PENPOT_TELEMETRY_REFERER=extra-env-test' "
-            "'PENPOT_FLAGS=enable-demo-users' "
+            "'PENPOT_FLAGS=enable-demo-users enable-mcp disable-mcp' "
             f"'PENPOT_AIO_LOG_LEVEL={shell_payload}' > /appdata/config/extra.env && "
             "chmod 600 /appdata/config/extra.env"
         ],
@@ -129,7 +151,12 @@ def test_extra_env_file_overrides_generated_runtime_defaults(
         assert (
             "export PENPOT_TELEMETRY_REFERER=extra-env-test" in runtime_env
         )  # nosec B101
-        assert "export PENPOT_FLAGS=enable-demo-users" in runtime_env  # nosec B101
+        assert (  # nosec B101
+            "export PENPOT_FLAGS='enable-demo-users enable-mcp disable-mcp'" in runtime_env
+        )
+        assert not container.path_exists(  # nosec B101
+            "/etc/nginx/overrides/server.d/mcp-locations.conf"
+        )
         assert (
             f"export PENPOT_AIO_LOG_LEVEL='{shell_payload}'" in runtime_env
         )  # nosec B101
@@ -167,6 +194,9 @@ def test_mcp_service_can_be_disabled_without_blocking_frontend(
     ) as container:
         container.wait_for_http(path="/readyz")
         assert "Bundled MCP disabled" in container.logs()  # nosec B101
+        assert not container.path_exists(  # nosec B101
+            "/etc/nginx/overrides/server.d/mcp-locations.conf"
+        )
         probe = container.exec(
             "timeout 2 bash -lc 'echo >/dev/tcp/127.0.0.1/4401'",
             check=False,
