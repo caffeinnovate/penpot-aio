@@ -10,8 +10,6 @@ ARG PENPOT_MCP_DIGEST=sha256:089734934ca4f5e586a8fdef510246a8e3de7a8c2a0f1f0c7a8
 ARG MAILPIT_VERSION=v1.30.2
 ARG MAILPIT_IMAGE_DIGEST=sha256:37a38e48e9338cd7e89dfeb487f37b02ebfcd9cb23111bed2d345e79d37d6dd6
 
-FROM jsonbored/aio-base:s6-3.2.1.0@sha256:07db479a01a95ba28480b4605f5d1cc8bedb574b77cf167ee46e29b9558fee90 AS aio-base
-
 FROM penpotapp/frontend:${PENPOT_VERSION}@${PENPOT_FRONTEND_DIGEST} AS frontend
 FROM penpotapp/backend:${PENPOT_VERSION}@${PENPOT_BACKEND_DIGEST} AS backend
 FROM penpotapp/mcp:${PENPOT_VERSION}@${PENPOT_MCP_DIGEST} AS mcp
@@ -19,6 +17,8 @@ FROM axllent/mailpit:${MAILPIT_VERSION}@${MAILPIT_IMAGE_DIGEST} AS mailpit
 FROM penpotapp/exporter:${PENPOT_VERSION}@${PENPOT_EXPORTER_DIGEST}
 
 ARG INTERNAL_POSTGRESQL_MAJOR=16
+ARG S6_OVERLAY_VERSION=3.2.1.0
+ARG TARGETARCH
 
 LABEL org.opencontainers.image.source="https://github.com/JSONbored/penpot-aio" \
       org.opencontainers.image.title="penpot-aio" \
@@ -29,11 +29,9 @@ USER root
 ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Shared, pinned s6-overlay from the fleet aio-base overlay.
-COPY --from=aio-base /aio-overlay/ /
-
 # hadolint ignore=DL3003
-RUN aio-harden pre && \
+RUN find /etc/apt -type f \( -name '*.list' -o -name '*.sources' \) -exec sed -i 's|http://|https://|g' {} + && \
+    printf 'Acquire::Retries "5";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\n' > /etc/apt/apt.conf.d/80-retries && \
     apt-get update && \
     apt-get -y dist-upgrade && \
     apt-get install -y --no-install-recommends \
@@ -55,6 +53,26 @@ RUN aio-harden pre && \
     chown -R mailpit:mailpit /appdata/mailpit && \
     chmod 700 /appdata/postgres /appdata/redis /appdata/mailpit && \
     rm -rf /tmp/* /var/lib/apt/lists/*
+
+# The common archive provides the init scripts and the platform archive provides the binaries.
+RUN set -eu; \
+    case "${TARGETARCH}" in \
+      amd64) s6_arch=x86_64; s6_arch_sha256=8bcbc2cada58426f976b159dcc4e06cbb1454d5f39252b3bb0c778ccf71c9435 ;; \
+      arm64) s6_arch=aarch64; s6_arch_sha256=c8fd6b1f0380d399422fc986a1e6799f6a287e2cfa24813ad0b6a4fb4fa755cc ;; \
+      *) printf 'Unsupported TARGETARCH: %s\n' "${TARGETARCH}" >&2; exit 1 ;; \
+    esac; \
+    s6_tmp="$(mktemp -d)"; \
+    trap 'rm -rf -- "${s6_tmp}"' EXIT; \
+    s6_release="https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}"; \
+    s6_noarch_archive="${s6_tmp}/s6-overlay-noarch.tar.xz"; \
+    s6_arch_archive="${s6_tmp}/s6-overlay-${s6_arch}.tar.xz"; \
+    curl -fsSL -o "${s6_noarch_archive}" "${s6_release}/s6-overlay-noarch.tar.xz"; \
+    curl -fsSL -o "${s6_arch_archive}" "${s6_release}/s6-overlay-${s6_arch}.tar.xz"; \
+    printf '%s  %s\n' \
+      '42e038a9a00fc0fef70bf0bc42f625a9c14f8ecdfe77d4ad93281edf717e10c5' "${s6_noarch_archive}" \
+      "${s6_arch_sha256}" "${s6_arch_archive}" | sha256sum --check -; \
+    tar -C / -Jxpf "${s6_noarch_archive}"; \
+    tar -C / -Jxpf "${s6_arch_archive}"
 
 COPY --from=backend /opt/jre /opt/jre
 COPY --from=backend /opt/penpot/backend /opt/penpot/backend
