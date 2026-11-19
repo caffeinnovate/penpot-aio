@@ -31,10 +31,18 @@ def test_happy_path_boot_and_restart_persists_generated_env(
     runtime: DockerRuntime,
 ) -> None:
     with runtime.container(
-        env_overrides={"PENPOT_PUBLIC_URI": "http://127.0.0.1:9001"}
+        env_overrides={
+            "PENPOT_PUBLIC_URI": "http://127.0.0.1:9001",
+            "PENPOT_PROFILE_BOUNCE_MAX_AGE": "",
+            "PENPOT_MCP_REPL_PORT": "",
+        }
     ) as container:
         container.wait_for_http(path="/readyz")
         container.wait_for_http(path="/")
+
+        runtime_env = container.read_text("/run/penpot-aio/runtime.env")
+        assert "PENPOT_PROFILE_BOUNCE_MAX_AGE=" not in runtime_env  # nosec B101
+        assert "PENPOT_MCP_REPL_PORT=" not in runtime_env  # nosec B101
 
         assert container.path_exists("/appdata/config/generated.env")  # nosec B101
         generated = container.read_text("/appdata/config/generated.env")

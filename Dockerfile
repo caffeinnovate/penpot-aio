@@ -17,7 +17,7 @@ FROM axllent/mailpit:${MAILPIT_VERSION}@${MAILPIT_IMAGE_DIGEST} AS mailpit
 FROM penpotapp/exporter:${PENPOT_VERSION}@${PENPOT_EXPORTER_DIGEST}
 
 ARG INTERNAL_POSTGRESQL_MAJOR=16
-ARG S6_OVERLAY_VERSION=3.2.1.0
+ARG S6_OVERLAY_VERSION=3.2.3.2
 ARG TARGETARCH
 
 LABEL org.opencontainers.image.source="https://github.com/JSONbored/penpot-aio" \
@@ -57,8 +57,8 @@ RUN find /etc/apt -type f \( -name '*.list' -o -name '*.sources' \) -exec sed -i
 # The common archive provides the init scripts and the platform archive provides the binaries.
 RUN set -eu; \
     case "${TARGETARCH}" in \
-      amd64) s6_arch=x86_64; s6_arch_sha256=8bcbc2cada58426f976b159dcc4e06cbb1454d5f39252b3bb0c778ccf71c9435 ;; \
-      arm64) s6_arch=aarch64; s6_arch_sha256=c8fd6b1f0380d399422fc986a1e6799f6a287e2cfa24813ad0b6a4fb4fa755cc ;; \
+      amd64) s6_arch=x86_64; s6_arch_sha256=e6befcc96a437a3831386ecfc51808c5d3e939dc5fe3c02ae9284599e8aa2408 ;; \
+      arm64) s6_arch=aarch64; s6_arch_sha256=b17f17a82e7a515c682a91edaf2ffdabb73f891981b6c1fd712115693a2f8b4c ;; \
       *) printf 'Unsupported TARGETARCH: %s\n' "${TARGETARCH}" >&2; exit 1 ;; \
     esac; \
     s6_tmp="$(mktemp -d)"; \
@@ -69,7 +69,7 @@ RUN set -eu; \
     curl -fsSL -o "${s6_noarch_archive}" "${s6_release}/s6-overlay-noarch.tar.xz"; \
     curl -fsSL -o "${s6_arch_archive}" "${s6_release}/s6-overlay-${s6_arch}.tar.xz"; \
     printf '%s  %s\n' \
-      '42e038a9a00fc0fef70bf0bc42f625a9c14f8ecdfe77d4ad93281edf717e10c5' "${s6_noarch_archive}" \
+      '5379750ed30a84bbd2e2dd74847ba6b5bd29cd0b2e3ea2ec58049b57eb2eda12' "${s6_noarch_archive}" \
       "${s6_arch_sha256}" "${s6_arch_archive}" | sha256sum --check -; \
     tar -C / -Jxpf "${s6_noarch_archive}"; \
     tar -C / -Jxpf "${s6_arch_archive}"

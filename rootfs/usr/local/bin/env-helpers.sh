@@ -3,6 +3,15 @@
 # shellcheck disable=SC2310,SC2312
 set -euo pipefail
 
+# Unraid sends blank optional template fields as empty environment values.
+# Clear them before applying defaults or reading explicit extra.env overrides.
+for template_key in "${!PENPOT_@}" "${!AWS_@}"; do
+	if [[ -z ${!template_key} ]]; then
+		unset "${template_key}"
+	fi
+done
+unset template_key
+
 ENV_FILE="${PENPOT_AIO_GENERATED_ENV_FILE:-/appdata/config/generated.env}"
 EXTRA_ENV_FILE="${PENPOT_AIO_EXTRA_ENV_FILE:-/appdata/config/extra.env}"
 RUNTIME_ENV_FILE="/run/penpot-aio/runtime.env"
