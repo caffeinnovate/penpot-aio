@@ -12,7 +12,7 @@ The default install bundles Penpot frontend, backend, exporter, MCP, PostgreSQL,
 
 ## Quick Install Notes
 
-- Image: `jsonbored/penpot-aio:latest`
+- Image: `ghcr.io/caffeinnovate/penpot-aio:latest`
 - Default Web UI: `http://[IP]:9001`
 - AppData: `/mnt/user/appdata/penpot-aio`
 - Required fields: Web UI port, AppData path, and the `Public URL` users will actually visit
@@ -39,13 +39,13 @@ Important persistent paths under AppData:
 
 ## Support Scope
 
-This thread covers the JSONbored Unraid AIO packaging for Penpot. For support, please include your Unraid version, relevant template settings, container logs, screenshots for UI issues, and what you expected to happen versus what happened.
+This thread covers the Caffeinnovate Penpot AIO fork for Unraid. For support, please include your Unraid version, relevant template settings, container logs, screenshots for UI issues, and what you expected to happen versus what happened.
 
 If the issue is upstream Penpot behavior rather than the Unraid packaging layer, I may redirect you to upstream Penpot resources.
 
 ## Links
 
-- Project repo: [JSONbored/penpot-aio](https://github.com/JSONbored/penpot-aio)
+- Project repo: [caffeinnovate/penpot-aio](https://github.com/caffeinnovate/penpot-aio)
 - Upstream project: [penpot/penpot](https://github.com/penpot/penpot)
-- Catalog repo: [JSONbored/awesome-unraid](https://github.com/JSONbored/awesome-unraid)
+- Unraid template: [penpot-aio.xml](https://raw.githubusercontent.com/caffeinnovate/penpot-aio/main/penpot-aio.xml)
 - GitHub Sponsors: [JSONbored](https://github.com/sponsors/JSONbored)

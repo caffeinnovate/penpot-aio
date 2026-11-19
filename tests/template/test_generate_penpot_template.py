@@ -61,32 +61,25 @@ def test_generated_penpot_template_is_current() -> None:
     assert "matches the generated template" in result.stdout  # nosec B101
 
 
-def test_xml_parses_and_has_ca_metadata() -> None:
+def test_xml_parses_and_has_fork_install_metadata() -> None:
     root = ET.parse(XML_PATH).getroot()
+    project_url = "https://github.com/caffeinnovate/penpot-aio"
+    raw_url = "https://raw.githubusercontent.com/caffeinnovate/penpot-aio/main"
     assert root.findtext("Name") == "penpot-aio"  # nosec B101
-    assert root.findtext("Repository") == "jsonbored/penpot-aio:latest"  # nosec B101
+    assert root.findtext("Repository") == "ghcr.io/caffeinnovate/penpot-aio:latest"  # nosec B101
     assert (
-        root.findtext("Project") == "https://github.com/JSONbored/penpot-aio"
+        root.findtext("Registry") == f"{project_url}/pkgs/container/penpot-aio"
     )  # nosec B101
-    assert (
-        root.findtext("Support") == "https://github.com/JSONbored/penpot-aio/issues"
-    )  # nosec B101
-    assert (
-        root.findtext("TemplateURL")
-        == "https://raw.githubusercontent.com/JSONbored/awesome-unraid/main/penpot-aio.xml"
-    )  # nosec B101
-    assert (
-        root.findtext("Icon")
-        == "https://raw.githubusercontent.com/JSONbored/awesome-unraid/main/icons/penpot.png"
-    )  # nosec B101
+    assert root.findtext("Project") == project_url  # nosec B101
+    assert root.findtext("Support") == f"{project_url}/issues"  # nosec B101
+    assert root.findtext("TemplateURL") == f"{raw_url}/penpot-aio.xml"  # nosec B101
+    assert root.findtext("Icon") == f"{raw_url}/assets/app-icon.png"  # nosec B101
     assert root.findtext("Category") == "Productivity Tools:Utilities"  # nosec B101
-    assert (
-        root.findtext("ReadMe") == "https://github.com/JSONbored/penpot-aio#readme"
-    )  # nosec B101
+    assert root.findtext("ReadMe") == f"{project_url}#readme"  # nosec B101
     assert [s.text for s in root.findall("Screenshot")] == [  # nosec B101
-        "https://raw.githubusercontent.com/JSONbored/awesome-unraid/main/screenshots/penpot-aio/01-login.png",
-        "https://raw.githubusercontent.com/JSONbored/awesome-unraid/main/screenshots/penpot-aio/02-projects.png",
-        "https://raw.githubusercontent.com/JSONbored/awesome-unraid/main/screenshots/penpot-aio/03-editor.png",
+        f"{raw_url}/screenshots/penpot-aio/01-login.png",
+        f"{raw_url}/screenshots/penpot-aio/02-projects.png",
+        f"{raw_url}/screenshots/penpot-aio/03-editor.png",
     ]
 
 

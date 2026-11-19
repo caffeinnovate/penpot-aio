@@ -18,17 +18,17 @@ An Unraid-first, single-container deployment of [Penpot](https://github.com/penp
 - Filesystem object storage under `/appdata/assets` by default
 - Persistent `/appdata` storage for database state, cache state, assets, generated secrets, Mailpit data, and optional overrides
 - Automatic generation and persistence of `PENPOT_SECRET_KEY`, bundled database password, bundled Redis password, and bundled Mailpit UI password when you leave them blank
-- Unraid CA template at [penpot-aio.xml](penpot-aio.xml)
+- Unraid template at [penpot-aio.xml](penpot-aio.xml)
 
 ## Beginner Install
 
 If you want the simplest supported path:
 
-1. Install the Unraid template.
-2. Leave `Web UI Port` and `AppData` at their defaults unless you have a port or path conflict.
-3. Set `Public URL` to the URL users will actually visit, such as `http://tower.local:9001` or your reverse-proxy HTTPS URL.
-4. Start the container and wait a few minutes for first boot.
-5. Open the web UI and create the first account.
+1. Save the [fork's Unraid template](https://raw.githubusercontent.com/caffeinnovate/penpot-aio/main/penpot-aio.xml) on the Unraid server as `/boot/config/plugins/dockerMan/templates-user/my-penpot-aio-caffeinnovate.xml`.
+2. In Unraid, open **Docker → Add Container** and select **penpot-aio-caffeinnovate** under **User templates**. The template uses `ghcr.io/caffeinnovate/penpot-aio:latest`.
+3. Leave `Web UI Port` and `AppData` at their defaults unless you have a port or path conflict.
+4. Set `Public URL` to the URL users will actually visit, such as `http://tower.local:9001` or your reverse-proxy HTTPS URL.
+5. Click **Apply** and wait a few minutes for first boot. Open the web UI and create the first account.
 6. If you need local mail capture, open the bundled Mailpit inbox on the advanced `Mailpit UI Port` and read the generated credentials from `/appdata/config/generated.env`.
 
 If you leave the important secrets blank, the wrapper will:
@@ -72,11 +72,9 @@ The wrapper still defaults to the internal bundled services so new Unraid users 
 
 ## Publishing and Releases
 
-- Wrapper releases use the upstream version plus an AIO revision, such as `v2.15.3-aio.1`.
-- The upstream project uses `.aio-fleet.yml` and `aio-fleet` for monitoring, release preparation, registry publishing, and catalog sync.
-- Changelog generation and XML `<Changes>` sync are run centrally by `aio-fleet` during release preparation.
-- `main` publishes `latest`, the pinned upstream version tag, the explicit AIO package tag, and `sha-<commit>` to Docker Hub.
-- Publish jobs require Docker Hub credentials and push the CA-facing Docker Hub tags directly.
+- Fork releases use the upstream version plus an AIO revision, such as `v2.19.3-aio.1`.
+- **Publish Penpot AIO to GHCR** publishes test builds from `main` as `sha-<commit>`.
+- **Release Penpot AIO** adds a version tag to the tested image and publishes the matching GitHub Release. It can also advance the `latest` tag used by the Unraid template.
 
 See [docs/releases.md](docs/releases.md) for the upstream release process and the Caffeinnovate fork's GitHub Actions publisher.
 
@@ -94,7 +92,6 @@ python3 scripts/generate_penpot_template.py --check
 cd ../aio-fleet
 .venv/bin/python -m aio_fleet validate-repo --repo penpot-aio --repo-path ../penpot-aio
 .venv/bin/python -m aio_fleet cleanup-repo --repo penpot-aio --repo-path ../penpot-aio --verify
-.venv/bin/python -m aio_fleet sync-catalog --repo penpot-aio --catalog-path ../awesome-unraid --dry-run
 ```
 
 The integration suite builds a Linux amd64 image and boots the full container stack, so it is intentionally more expensive than the unit and XML checks.
@@ -112,18 +109,13 @@ CI cost model:
 - image publish stays gated behind the integration suite instead of treating skipped integration as acceptable
 - extended provider coverage stays opt-in because it is materially more expensive than the required gate
 
-## Community Apps Sync
+## Community Apps
 
-This repo is the source repo. The CA-facing XML and icon should be synced into `JSONbored/awesome-unraid` only after:
-
-1. local validation passes
-2. the image is publishable
-3. the support content is ready
-4. the catalog metadata points at the published Docker Hub image and raw `awesome-unraid/main` assets
+The [JSONbored Community Apps catalog](https://github.com/JSONbored/awesome-unraid) serves the upstream project. Follow [Beginner Install](#beginner-install) for the Caffeinnovate template.
 
 ## Support
 
-- Repo issues: [JSONbored/penpot-aio issues](https://github.com/JSONbored/penpot-aio/issues)
+- Repo issues: [Caffeinnovate Penpot AIO issues](https://github.com/caffeinnovate/penpot-aio/issues)
 - Upstream app: [penpot/penpot](https://github.com/penpot/penpot)
 - Official docs: [help.penpot.app](https://help.penpot.app/)
 - Configuration docs: [Penpot configuration](https://help.penpot.app/technical-guide/configuration/)

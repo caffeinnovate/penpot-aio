@@ -14,6 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 INVENTORY_PATH = ROOT / "docs/upstream/penpot-config-inventory.json"
 OUTPUT_PATH = ROOT / "penpot-aio.xml"
 CHANGELOG_PATH = ROOT / "CHANGELOG.md"
+FORK_PROJECT_URL = "https://github.com/caffeinnovate/penpot-aio"
+FORK_RAW_URL = "https://raw.githubusercontent.com/caffeinnovate/penpot-aio/main"
 
 SECRET_HINTS = (
     "ACCESS_KEY",
@@ -589,26 +591,26 @@ def render_template(configs: list[Config]) -> str:
     return f"""<?xml version="1.0"?>
 <Container version="2">
   <Name>penpot-aio</Name>
-  <Repository>jsonbored/penpot-aio:latest</Repository>
-  <Registry>https://hub.docker.com/r/jsonbored/penpot-aio</Registry>
+  <Repository>ghcr.io/caffeinnovate/penpot-aio:latest</Repository>
+  <Registry>{FORK_PROJECT_URL}/pkgs/container/penpot-aio</Registry>
   <Network>bridge</Network>
   <MyIP/>
   <Shell>sh</Shell>
   <Privileged>false</Privileged>
-  <Support>https://github.com/JSONbored/penpot-aio/issues</Support>
-  <Project>https://github.com/JSONbored/penpot-aio</Project>
+  <Support>{FORK_PROJECT_URL}/issues</Support>
+  <Project>{FORK_PROJECT_URL}</Project>
   <Overview>{encode_multiline(template_overview())}</Overview>
   <Changes>{encode_multiline(changes_body())}</Changes>
   <Category>Productivity Tools:Utilities</Category>
   <WebUI>http://[IP]:[PORT:8080]</WebUI>
-  <TemplateURL>https://raw.githubusercontent.com/JSONbored/awesome-unraid/main/penpot-aio.xml</TemplateURL>
-  <ReadMe>https://github.com/JSONbored/penpot-aio#readme</ReadMe>
-  <Icon>https://raw.githubusercontent.com/JSONbored/awesome-unraid/main/icons/penpot.png</Icon>
+  <TemplateURL>{FORK_RAW_URL}/penpot-aio.xml</TemplateURL>
+  <ReadMe>{FORK_PROJECT_URL}#readme</ReadMe>
+  <Icon>{FORK_RAW_URL}/assets/app-icon.png</Icon>
   <ExtraSearchTerms>design prototype figma alternative whiteboard mcp ux ui product design self-hosted</ExtraSearchTerms>
   <Requires>Penpot is a heavier multi-service application. Plan for at least 2 CPU cores and 4 GiB RAM. Use HTTPS and production-safe flags before exposing it publicly.</Requires>
-  <Screenshot>https://raw.githubusercontent.com/JSONbored/awesome-unraid/main/screenshots/penpot-aio/01-login.png</Screenshot>
-  <Screenshot>https://raw.githubusercontent.com/JSONbored/awesome-unraid/main/screenshots/penpot-aio/02-projects.png</Screenshot>
-  <Screenshot>https://raw.githubusercontent.com/JSONbored/awesome-unraid/main/screenshots/penpot-aio/03-editor.png</Screenshot>
+  <Screenshot>{FORK_RAW_URL}/screenshots/penpot-aio/01-login.png</Screenshot>
+  <Screenshot>{FORK_RAW_URL}/screenshots/penpot-aio/02-projects.png</Screenshot>
+  <Screenshot>{FORK_RAW_URL}/screenshots/penpot-aio/03-editor.png</Screenshot>
   <ExtraParams/>
   <PostArgs/>
   <CPUset/>
