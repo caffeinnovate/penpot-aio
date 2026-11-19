@@ -1,6 +1,6 @@
 # penpot-aio
 
-![penpot-aio](https://socialify.git.ci/JSONbored/penpot-aio/image?custom_description=Unraid+CA+AIO+template+and+Docker+image+for+Penpot%2C+the+open-source+design+and+prototyping+platform%2C+with+bundled+PostgreSQL%2C+Redis%2C+Mailpit%2C+exporter%2C+and+MCP.&custom_language=Dockerfile&description=1&font=Raleway&forks=1&issues=1&language=1&logo=https%3A%2F%2Fraw.githubusercontent.com%2FJSONbored%2Fpenpot-aio%2Fmain%2Fassets%2Fapp-icon.png&name=1&owner=1&pattern=Formal+Invitation&pulls=1&stargazers=1&theme=Light)
+![penpot-aio](https://socialify.git.ci/caffeinnovate/penpot-aio/image?custom_description=Unraid+AIO+template+and+Docker+image+for+Penpot%2C+the+open-source+design+and+prototyping+platform%2C+with+bundled+PostgreSQL%2C+Redis%2C+Mailpit%2C+exporter%2C+and+MCP.&custom_language=Dockerfile&description=1&font=Raleway&forks=1&issues=1&language=1&logo=https%3A%2F%2Fraw.githubusercontent.com%2Fcaffeinnovate%2Fpenpot-aio%2Fmain%2Fassets%2Fapp-icon.png&name=1&owner=1&pattern=Formal+Invitation&pulls=1&stargazers=1&theme=Light)
 
 An Unraid-first, single-container deployment of [Penpot](https://github.com/penpot/penpot) for people who want the easiest reliable self-hosted install without manually wiring PostgreSQL, Redis, SMTP capture, exporter, MCP, and the upstream compose stack on day one.
 
@@ -80,34 +80,23 @@ See [docs/releases.md](docs/releases.md) for the upstream release process and th
 
 ## Validation
 
-Required local validation is split between app-specific tests and `aio-fleet`:
+Run the template and Docker integration checks locally with the test dependencies used by the publish workflow.
 
 ```bash
 python3 -m venv .venv-local
-.venv-local/bin/pip install -e "../aio-fleet[app-tests]"
-python3 scripts/refresh_upstream_inventory.py
-python3 scripts/generate_penpot_template.py --check
-.venv-local/bin/pytest tests/template --junit-xml=reports/pytest-unit.xml -o junit_family=xunit1
-.venv-local/bin/pytest tests/integration -m integration --junit-xml=reports/pytest-integration.xml -o junit_family=xunit1
-cd ../aio-fleet
-.venv/bin/python -m aio_fleet validate-repo --repo penpot-aio --repo-path ../penpot-aio
-.venv/bin/python -m aio_fleet cleanup-repo --repo penpot-aio --repo-path ../penpot-aio --verify
+.venv-local/bin/python -m pip install 'aio-fleet[app-tests] @ git+https://github.com/JSONbored/aio-fleet.git@2d5435604fb03485b6cd03e5ecd769ae0eae8fe2'
+.venv-local/bin/python scripts/generate_penpot_template.py --check
+.venv-local/bin/python -m pytest tests/template
+.venv-local/bin/python -m pytest tests/integration -m integration
 ```
 
-The integration suite builds a Linux amd64 image and boots the full container stack, so it is intentionally more expensive than the unit and XML checks.
+The integration suite builds a Linux AMD64 image and boots the container. The manual **Publish Penpot AIO to GHCR** workflow runs the template and integration checks before pushing the image.
 
-The extended runtime matrix is opt-in and covers external PostgreSQL, external Redis, S3-compatible storage, and external SMTP/Mailpit paths:
+The external PostgreSQL and Redis integration test is opt-in.
 
 ```bash
-AIO_RUN_EXTENDED_INTEGRATION=true .venv-local/bin/pytest tests/integration -m extended_integration
+AIO_RUN_EXTENDED_INTEGRATION=true .venv-local/bin/python -m pytest tests/integration -m extended_integration
 ```
-
-CI cost model:
-
-- relevant PRs and `main` pushes run the fast validation layers first
-- Docker-backed integration tests run for build-relevant changes, for `main` release-metadata commits when publish is still in play, and for manual dispatches
-- image publish stays gated behind the integration suite instead of treating skipped integration as acceptable
-- extended provider coverage stays opt-in because it is materially more expensive than the required gate
 
 ## Community Apps
 
@@ -120,14 +109,8 @@ The [JSONbored Community Apps catalog](https://github.com/JSONbored/awesome-unra
 - Official docs: [help.penpot.app](https://help.penpot.app/)
 - Configuration docs: [Penpot configuration](https://help.penpot.app/technical-guide/configuration/)
 
-## Funding
-
-If this work saves you time, support it here:
+## Support the upstream maintainer
 
 - [GitHub Sponsors](https://github.com/sponsors/JSONbored)
 - [Ko-fi](https://ko-fi.com/jsonbored)
 - [Buy Me a Coffee](https://buymeacoffee.com/jsonbored)
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=JSONbored/penpot-aio&theme=dark)](https://star-history.com/#JSONbored/penpot-aio&Date)
