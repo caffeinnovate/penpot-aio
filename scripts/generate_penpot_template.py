@@ -79,6 +79,7 @@ CURATED_DEFAULTS = {
     "PENPOT_HTTP_SERVER_PORT": "6060",
     "PENPOT_HTTP_SERVER_MAX_BODY_SIZE": "367001600",
     "PENPOT_HTTP_SERVER_MAX_MULTIPART_BODY_SIZE": "367001600",
+    "PENPOT_CSP_MODE": "report-only|enforce|disabled",
     "PENPOT_DATABASE_URI": "",
     "PENPOT_DATABASE_USERNAME": "penpot",
     "PENPOT_DATABASE_PASSWORD": "",  # nosec B105 - blank template default.
@@ -365,6 +366,8 @@ def mask_for(target: str) -> bool:
 
 
 def description_for(target: str) -> str:
+    if target.startswith("PENPOT_ADMIN_CONSOLE_"):
+        return "Unavailable in this AIO build because Penpot's Admin Console is disabled."
     custom = {
         "PENPOT_PUBLIC_URI": "Canonical URL users will visit, including http or https. For LAN installs use your Unraid host and mapped port; for public installs use the reverse-proxy HTTPS URL.",
         "PENPOT_SECRET_KEY": "Penpot master secret key. Leave blank to generate and persist a strong value on first boot. Changing this later can invalidate sessions and encrypted data.",  # nosec B105
@@ -388,6 +391,8 @@ def description_for(target: str) -> str:
 
 def default_for(item: dict[str, object]) -> str:
     target = str(item["name"])
+    if target.startswith("PENPOT_ADMIN_CONSOLE_"):
+        return ""
     if target in CURATED_DEFAULTS:
         return CURATED_DEFAULTS[target]
     if target in BOOLEAN_DEFAULTS:
@@ -499,6 +504,16 @@ def build_configs(inventory: dict[str, object]) -> list[Config]:
     for flag in flags:
         flag_name = str(flag["name"])
         target = f"PENPOT_AIO_FLAG_{flag_name.upper().replace('-', '_')}"
+        if flag_name.startswith("admin-console"):
+            configs.append(
+                Config(
+                    f"[Flags] {flag_name}",
+                    target,
+                    "disable",
+                    description="Unavailable in this AIO build because Penpot's Admin Console is disabled.",
+                )
+            )
+            continue
         configs.append(
             Config(
                 f"[Flags] {flag_name}",

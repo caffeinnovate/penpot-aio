@@ -347,6 +347,21 @@ configure_runtime_env() {
 	fi
 
 	load_extra_env
+
+	# The AIO has no Admin Console service. Preserve the remaining flag order.
+	local flag
+	local -a flags effective_flags=()
+	read -r -a flags <<<"${PENPOT_FLAGS//$'\n'/ }"
+	for flag in "${flags[@]}"; do
+		case "${flag}" in
+			enable-admin-console | disable-admin-console) ;;
+			*) effective_flags+=("${flag}") ;;
+		esac
+	done
+	effective_flags+=(disable-admin-console)
+	export PENPOT_FLAGS="${effective_flags[*]}"
+	export PENPOT_ADMIN_CONSOLE_URI=""
+
 	write_runtime_env
 }
 

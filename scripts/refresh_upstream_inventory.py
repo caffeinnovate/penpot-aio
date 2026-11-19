@@ -10,7 +10,7 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs/upstream/penpot-config-inventory.json"
-UPSTREAM_VERSION = "2.15.3"
+UPSTREAM_VERSION = "2.19.3"
 RAW_BASE = f"https://raw.githubusercontent.com/penpot/penpot/{UPSTREAM_VERSION}"
 
 SOURCES = {

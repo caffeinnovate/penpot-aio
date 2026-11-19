@@ -43,6 +43,16 @@ def test_happy_path_boot_and_restart_persists_generated_env(
         runtime_env = container.read_text("/run/penpot-aio/runtime.env")
         assert "PENPOT_PROFILE_BOUNCE_MAX_AGE=" not in runtime_env  # nosec B101
         assert "PENPOT_MCP_REPL_PORT=" not in runtime_env  # nosec B101
+        assert "disable-admin-console" in runtime_env  # nosec B101
+        postgres_major = container.read_text("/appdata/postgres/PG_VERSION").strip()
+        assert postgres_major == "16"  # nosec B101
+        assert not container.path_exists(  # nosec B101
+            "/etc/nginx/overrides/server.d/admin-console-locations.conf"
+        )
+        headers = container.exec(
+            "curl -fsS -D - -o /dev/null http://127.0.0.1:8080/"
+        ).stdout
+        assert "content-security-policy-report-only:" in headers.lower()  # nosec B101
 
         assert container.path_exists("/appdata/config/generated.env")  # nosec B101
         generated = container.read_text("/appdata/config/generated.env")
@@ -147,11 +157,14 @@ def test_extra_env_file_overrides_generated_runtime_defaults(
     with runtime.container(
         env_overrides={"PENPOT_PUBLIC_URI": "http://127.0.0.1:9001"},
         preseed_appdata=[
-            "install -d -m 700 /appdata/config && "
-            "printf '%s\n' 'PENPOT_TELEMETRY_REFERER=extra-env-test' "
-            "'PENPOT_FLAGS=enable-demo-users enable-mcp disable-mcp' "
-            f"'PENPOT_AIO_LOG_LEVEL={shell_payload}' > /appdata/config/extra.env && "
-            "chmod 600 /appdata/config/extra.env"
+            (
+                "install -d -m 700 /appdata/config && "
+                "printf '%s\n' 'PENPOT_TELEMETRY_REFERER=extra-env-test' "
+                "'PENPOT_FLAGS=enable-demo-users enable-mcp disable-mcp enable-admin-console' "
+                "'PENPOT_ADMIN_CONSOLE_URI=http://admin.invalid:3000' "
+                f"'PENPOT_AIO_LOG_LEVEL={shell_payload}' > /appdata/config/extra.env && "
+                "chmod 600 /appdata/config/extra.env"
+            )
         ],
     ) as container:
         container.wait_for_http(path="/readyz")
@@ -160,7 +173,12 @@ def test_extra_env_file_overrides_generated_runtime_defaults(
             "export PENPOT_TELEMETRY_REFERER=extra-env-test" in runtime_env
         )  # nosec B101
         assert (  # nosec B101
-            "export PENPOT_FLAGS='enable-demo-users enable-mcp disable-mcp'" in runtime_env
+            "export PENPOT_FLAGS='enable-demo-users enable-mcp disable-mcp disable-admin-console'"
+            in runtime_env
+        )
+        assert "export PENPOT_ADMIN_CONSOLE_URI=''" in runtime_env  # nosec B101
+        assert not container.path_exists(  # nosec B101
+            "/etc/nginx/overrides/server.d/admin-console-locations.conf"
         )
         assert not container.path_exists(  # nosec B101
             "/etc/nginx/overrides/server.d/mcp-locations.conf"
@@ -217,7 +235,10 @@ def test_frontend_config_encodes_public_uri_as_javascript_string(
 ) -> None:
     public_uri = 'http://127.0.0.1:9001/?next="quoted"'
     with runtime.container(
-        env_overrides={"PENPOT_PUBLIC_URI": public_uri}
+        env_overrides={
+            "PENPOT_PUBLIC_URI": public_uri,
+            "PENPOT_FLAGS": "enable-mcp enable-admin-console",
+        }
     ) as container:
         container.wait_for_http(path="/")
         config = container.read_text("/var/www/app/js/config.js")
@@ -225,6 +246,7 @@ def test_frontend_config_encodes_public_uri_as_javascript_string(
             'var penpotPublicURI = "http://127.0.0.1:9001/?next=\\"quoted\\"";'
             in config
         )  # nosec B101
+        assert 'var penpotFlags = "enable-mcp disable-admin-console";' in config  # nosec B101
         container.exec("node --check /var/www/app/js/config.js")
 
 

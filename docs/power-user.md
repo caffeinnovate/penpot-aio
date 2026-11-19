@@ -4,7 +4,7 @@ The Unraid template exposes upstream Penpot settings as Advanced options. Dropdo
 
 ## Flags
 
-Leave `PENPOT_FLAGS` blank to use `PENPOT_AIO_DEFAULT_FLAGS` plus per-flag dropdown controls. Set `PENPOT_FLAGS` only when you want full raw upstream control.
+Leave `PENPOT_FLAGS` blank to use `PENPOT_AIO_DEFAULT_FLAGS` plus per-flag dropdown controls. Set `PENPOT_FLAGS` to supply upstream flags directly. The AIO disables Penpot's Admin Console after applying flag overrides.
 
 Default AIO flags:
 
@@ -12,6 +12,7 @@ Default AIO flags:
 - `enable-smtp`
 - `disable-secure-session-cookies`
 - `enable-mcp`
+- `disable-admin-console`
 
 ## Storage
 

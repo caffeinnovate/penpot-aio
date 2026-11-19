@@ -12,7 +12,8 @@ wait_for_mailpit_ready
 export HOME="/opt/penpot"
 export USER="penpot"
 export LOGNAME="penpot"
-export PATH="/command:/opt/jre/bin:/opt/node/bin:/opt/imagick/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export PATH="/command:/opt/jre/bin:/opt/imagick/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export LD_LIBRARY_PATH="/opt/imagick/lib/deps"
 
 cd /opt/penpot/backend
 exec /command/s6-setuidgid penpot ./run.sh
