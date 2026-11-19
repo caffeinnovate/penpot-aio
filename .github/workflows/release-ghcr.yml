@@ -1,0 +1,60 @@
+name: Release Penpot AIO
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: Full commit SHA of the tested build
+        required: true
+        type: string
+      image_digest:
+        description: Image index digest tested in Unraid (sha256:...)
+        required: true
+        type: string
+      release_version:
+        description: AIO version without the v prefix (for example 2.16.0-aio.4)
+        required: true
+        type: string
+      make_latest:
+        description: Advance the GHCR latest tag and the GitHub Latest release
+        type: boolean
+        default: false
+
+concurrency:
+  group: penpot-aio-ghcr-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.repository == 'caffeinnovate/penpot-aio' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout main with history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GHCR
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Promote the tested image and publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_COMMIT: ${{ inputs.source_commit }}
+          IMAGE_DIGEST: ${{ inputs.image_digest }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
+          MAKE_LATEST: ${{ inputs.make_latest && 'true' || 'false' }}
+        run: python3 scripts/release_ghcr.py "$SOURCE_COMMIT" "$IMAGE_DIGEST" "$RELEASE_VERSION" "$MAKE_LATEST"
